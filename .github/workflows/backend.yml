@@ -1,0 +1,62 @@
+name: Backend .NET 8
+on:
+  push:
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore Atendimento.sln
+      - run: dotnet tool restore
+      - name: Scaffold initial migrations if absent
+        run: |
+          if [ ! -d src/Infrastructure/Migrations ]; then
+            dotnet ef migrations add InitialSqlServer --project src/Infrastructure --context AtendimentoDbContext --output-dir Migrations/SqlServer
+            dotnet ef migrations add InitialSqlite --project src/Infrastructure --context SqliteAtendimentoDbContext --output-dir Migrations/Sqlite
+          fi
+      - name: Build
+        run: dotnet build Atendimento.sln --no-restore --configuration Release
+      - name: Tests
+        run: dotnet test Atendimento.sln --no-build --configuration Release --logger 'trx;LogFileName=tests.trx'
+      - name: Validate SQL Server migration script
+        run: dotnet ef migrations script --idempotent --project src/Infrastructure --context AtendimentoDbContext --output sqlserver.sql
+      - name: Smoke API with SQLite
+        run: |
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5080 dotnet src/Api/bin/Release/net8.0/Api.dll --contentRoot "$PWD/src/Api" > api.log 2>&1 &
+          API_PID=$!
+          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://localhost:5080/api/clientes >/dev/null; then break; fi
+            if ! kill -0 "$API_PID" 2>/dev/null; then cat api.log; exit 1; fi
+            sleep 1
+          done
+          python3 scripts/smoke.py || { cat api.log; exit 1; }
+      - name: Export generated migration source
+        if: always()
+        run: |
+          python3 - <<'PYCODE'
+          import pathlib, json, base64
+          for p in pathlib.Path('src/Infrastructure/Migrations').rglob('*.cs'):
+              print('MIGRATION_SOURCE ' + json.dumps({'path':'backend/'+str(p), 'content':base64.b64encode(p.read_bytes()).decode()}))
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-validation
+          path: |
+            backend/src/Infrastructure/Migrations
+            backend/tests/**/TestResults/*.trx
+            backend/sqlserver.sql
+            backend/api.log
