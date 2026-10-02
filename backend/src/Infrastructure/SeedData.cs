@@ -29,16 +29,16 @@ public static class SeedData
         var hojeLocal = TimeZoneInfo.ConvertTimeFromUtc(agora, fuso).Date;
         for (var i = 0; i < 240; i++)
         {
-            var tecnico = tecnicos[i % 10]; var regra = regras[i % 4];
+            var tecnico = tecnicos[random.Next(10)]; var regra = regras[random.Next(4)];
             var local = hojeLocal.AddDays(-(i % 60)).AddHours(8 + random.Next(8)).AddMinutes(random.Next(60));
             var criado = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), fuso);
             if (criado > agora) criado = agora.AddMinutes(-random.Next(1, 120));
             var t = new Ticket { Assunto = assuntos[i % assuntos.Length], Descricao = $"Cliente {clientes[i % 30].Nome} relata dificuldade na operação. Solicitada análise e orientação da equipe de suporte.",
-                Cliente = clientes[i % 30], Tecnico = tecnico, Equipe = tecnico.Equipe, Prioridade = regra.Prioridade, Canal = (Canal)(i % 4),
+                Cliente = clientes[i % 30], Tecnico = tecnico, Equipe = tecnico.Equipe, Prioridade = regra.Prioridade, Canal = (Canal)random.Next(4),
                 CriadoEm = criado, AtualizadoEm = criado, Status = StatusTicket.Aberto, PrazoPrimeiraRespostaMinutos = regra.PrimeiraRespostaMinutos,
                 PrazoResolucaoMinutos = regra.ResolucaoMinutos, HorarioSlaJson = SlaService.SerializarHorario(horario) };
             t.Historico.Add(new HistoricoTicket { Campo = "Criacao", Novo = "Aberto", CriadoEm = criado });
-            var statusFinal = (StatusTicket)(i % 5);
+            var statusFinal = (StatusTicket)random.Next(5);
             var resposta = criado.AddMinutes(i % 7 == 0 ? 900 : random.Next(5, 90));
             if (resposta < agora && statusFinal != StatusTicket.Aberto)
             {
