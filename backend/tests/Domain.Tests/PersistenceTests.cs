@@ -47,9 +47,16 @@ public class PersistenceTests
     {
         var validator = new ConfiguracaoValidator();
         var regras = Enum.GetValues<Prioridade>().Select(p => new RegraSlaDto(p, 30, 240)).ToList();
-        Assert.True(validator.Validate(new(regras, new())).IsValid);
-        Assert.False(validator.Validate(new(regras, new() { Dias = [] })).IsValid);
-        Assert.False(validator.Validate(new(regras, new() { Fim = new(7, 0) })).IsValid);
-        Assert.False(validator.Validate(new(regras, new() { FusoHorario = "inexistente" })).IsValid);
+        Assert.True(validator.Validate(
+    new ConfiguracaoSlaDto(regras, new())).IsValid);
+
+Assert.False(validator.Validate(
+    new ConfiguracaoSlaDto(regras, new() { Dias = [] })).IsValid);
+
+Assert.False(validator.Validate(
+    new ConfiguracaoSlaDto(regras, new() { Fim = new(7, 0) })).IsValid);
+
+Assert.False(validator.Validate(
+    new ConfiguracaoSlaDto(regras, new() { FusoHorario = "inexistente" })).IsValid);
     }
 }
