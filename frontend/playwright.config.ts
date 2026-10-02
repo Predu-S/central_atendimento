@@ -1,0 +1,2 @@
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({ testDir: './tests', fullyParallel: false, workers: 1, retries: 0, timeout: 45000, reporter: [['list'], ['html', { open: 'never' }]], use: { baseURL: 'http://localhost:5173', locale: 'pt-BR', timezoneId: 'America/Fortaleza', trace: 'retain-on-failure' }, projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }], webServer: { command: 'npm run dev', url: 'http://localhost:5173', reuseExistingServer: !process.env.CI, timeout: 30000 } });
