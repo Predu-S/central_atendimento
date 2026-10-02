@@ -9,7 +9,15 @@ def request(path, data=None, method='GET', expected=200):
     assert status == expected, (path, status, result)
     return result
 spec = request('/swagger/v1/swagger.json')
-assert len(spec['paths']) >= 15
+required = {
+    '/api/dashboard/resumo': ['get'], '/api/dashboard/series': ['get'], '/api/dashboard/sla-em-risco': ['get'],
+    '/api/tickets': ['get', 'post'], '/api/tickets/{id}': ['get', 'put'], '/api/tickets/lote': ['patch'],
+    '/api/tickets/{id}/mensagens': ['post'], '/api/sla/regras': ['get', 'put'],
+    '/api/sla/indicadores': ['get'], '/api/sla/violacoes': ['get'], '/api/equipe/ranking': ['get'],
+    '/api/equipe/carga': ['get'], '/api/clientes': ['get'], '/api/clientes/{id}/tickets': ['get']
+}
+for path, methods in required.items():
+    for method in methods: assert method in spec['paths'].get(path, {}), (path, method, 'ausente no Swagger')
 assert request('/api/tickets')['total'] == 240
 assert len(request('/api/clientes')) == 30
 assert len(request('/api/equipe/carga')) == 10

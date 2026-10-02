@@ -40,7 +40,7 @@ jobs:
         run: |
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5080 dotnet src/Api/bin/Release/net8.0/Api.dll --contentRoot "$PWD/src/Api" > api.log 2>&1 &
           API_PID=$!
-          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
+          trap 'kill "$API_PID" 2>/dev/null || true; wait "$API_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 60); do
             if curl --silent --fail http://localhost:5080/api/clientes >/dev/null; then break; fi
             if ! kill -0 "$API_PID" 2>/dev/null; then cat api.log; exit 1; fi
@@ -54,7 +54,7 @@ jobs:
         run: |
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5080 dotnet src/Api/bin/Release/net8.0/Api.dll --contentRoot "$PWD/src/Api" > sqlserver-api.log 2>&1 &
           API_PID=$!
-          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
+          trap 'kill "$API_PID" 2>/dev/null || true; wait "$API_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 90); do
             if curl --silent --fail http://localhost:5080/api/clientes >/dev/null; then break; fi
             if ! kill -0 "$API_PID" 2>/dev/null; then cat sqlserver-api.log; exit 1; fi
