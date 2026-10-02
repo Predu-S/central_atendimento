@@ -1,0 +1,14 @@
+import type { StatusTicket, Prioridade, Canal, TicketDto, TicketInput } from '../types/api';
+export const statuses: StatusTicket[] = ['Aberto', 'EmAndamento', 'AguardandoCliente', 'Resolvido', 'Fechado'];
+export const priorities: Prioridade[] = ['Critica', 'Alta', 'Media', 'Baixa'];
+export const channels: Canal[] = ['WhatsApp', 'Email', 'Telefone', 'Chat'];
+export const labels: Record<string, string> = { Aberto: 'Aberto', EmAndamento: 'Em andamento', AguardandoCliente: 'Aguardando cliente', Resolvido: 'Resolvido', Fechado: 'Fechado', Critica: 'Crítica', Alta: 'Alta', Media: 'Média', Baixa: 'Baixa', Email: 'E-mail', NoPrazo: 'No prazo', EmRisco: 'Em risco', Violado: 'Violado', Criacao: 'Criação', Status: 'Status', Prioridade: 'Prioridade', Assunto: 'Assunto', Descricao: 'Descrição', ClienteId: 'Cliente', TecnicoId: 'Técnico', EquipeId: 'Equipe', Canal: 'Canal', Csat: 'CSAT' };
+export const label = (value: string) => labels[value] || value;
+export const number = (value: number | null | undefined, digits = 0) => value == null ? '—' : value.toLocaleString('pt-BR', { maximumFractionDigits: digits });
+export const dateTime = (value: string | null | undefined) => value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+export const shortDate = (value: string) => new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+export function duration(minutes: number | null | undefined, seconds = false) { if (minutes == null) return '—'; const negative = minutes < 0; const value = Math.abs(minutes); const hours = Math.floor(value / 60); const mins = Math.floor(value % 60); const secs = Math.floor(value * 60 % 60); return `${negative ? '−' : ''}${hours ? `${hours}h ` : ''}${mins}min${seconds ? ` ${secs.toString().padStart(2, '0')}s` : ''}`; }
+export const closed = (ticket: TicketDto) => ticket.status === 'Resolvido' || ticket.status === 'Fechado';
+export const ticketInput = (t: TicketDto): TicketInput => ({ assunto: t.assunto, descricao: t.descricao, clienteId: t.cliente.id, tecnicoId: t.tecnico?.id ?? null, equipeId: t.equipe?.id ?? null, prioridade: t.prioridade, canal: t.canal, status: t.status, csat: t.csat });
+export function csv(rows: (string | number | null)[][]) { return '\uFEFF' + rows.map(row => row.map(value => { let text = value == null ? '' : String(value); if (typeof value === 'string' && /^[\s]*[=+\-@]/.test(text)) text = "'" + text; return `"${text.replace(/"/g, '""')}"`; }).join(';')).join('\r\n'); }
+export function downloadCsv(content: string, filename: string) { const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' })); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
