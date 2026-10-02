@@ -55,6 +55,9 @@ jobs:
           import pathlib, base64
           p=pathlib.Path('frontend/test-results/dashboard-desktop.png')
           if p.exists(): print('DASHBOARD_PREVIEW '+base64.b64encode(p.read_bytes()).decode())
+          for name in ['equipe-dark', 'clientes-mobile']:
+              p=pathlib.Path('frontend/test-results/'+name+'.jpg')
+              if p.exists(): print('VISUAL_PREVIEW '+name+' '+base64.b64encode(p.read_bytes()).decode())
           PY
       - uses: actions/upload-artifact@v4
         if: always()

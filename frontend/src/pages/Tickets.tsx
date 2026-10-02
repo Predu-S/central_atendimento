@@ -21,7 +21,7 @@ export function Tickets() {
   const mode = params.get('modo') === 'kanban' ? 'kanban' : 'lista';
   const listing = useTickets({ ...filters, pagina: page, tamanhoPagina: size, ordenarPor: order, descendente: params.get('descendente') !== 'false' });
   const kanban = useInfiniteQuery({ queryKey: ['kanban', filters, order, params.get('descendente')], queryFn: ({ pageParam, signal }) => api.tickets({ ...filters, pagina: pageParam, tamanhoPagina: 100, ordenarPor: order, descendente: params.get('descendente') !== 'false' }, signal), initialPageParam: 1, getNextPageParam: last => last.pagina * last.tamanhoPagina < last.total ? last.pagina + 1 : undefined, enabled: mode === 'kanban' && !error, refetchInterval: 15000 });
-  const fingerprint = JSON.stringify({ filters, page, size, order, mode });
+  const fingerprint = JSON.stringify({ filters, page, size, order, mode, descendente: params.get('descendente') });
   useEffect(() => { setSelected(new Set()); }, [fingerprint]);
   function setPage(value: number) { setParams(current => { const next = new URLSearchParams(current); next.set('pagina', String(value)); return next; }, { replace: true }); }
   function search(e: FormEvent<HTMLFormElement>) { e.preventDefault(); update({ busca: String(new FormData(e.currentTarget).get('busca') || '').trim() }); }

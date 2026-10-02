@@ -3,7 +3,8 @@ import type { HorarioComercial, MedicaoSla, TicketDto } from '../types/api';
 export function useNow() { const [now, setNow] = useState(Date.now()); useEffect(() => { const interval = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(interval); }, []); return now; }
 export function workingElapsed(from: number, to: number, horario?: HorarioComercial) {
   if (!horario || to <= from) return 0;
-  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: horario.fusoHorario, weekday: 'long', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+  let fmt: Intl.DateTimeFormat;
+  try { fmt = new Intl.DateTimeFormat('en-US', { timeZone: horario.fusoHorario, weekday: 'long', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }); } catch { return 0; }
   const seconds = (t: string) => t.split(':').reduce((sum, part, i) => sum + Number(part) * [3600, 60, 1][i], 0);
   const start = seconds(horario.inicio), end = seconds(horario.fim); let elapsed = 0;
   // Após 60s sem uma leitura nova, a interpolação congela; a API é sempre a referência.

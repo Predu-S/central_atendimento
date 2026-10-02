@@ -84,12 +84,12 @@ test('Regras, clientes, exportação de todas as páginas e tema responsivo', as
   const download = page.waitForEvent('download'); await page.getByRole('button', { name: 'Exportar CSV' }).first().click(); const file = await download; expect(file.suggestedFilename()).toContain('central-tickets');
   await expect(page.getByText(`${total} registros exportados com sucesso.`)).toBeVisible();
   await page.getByRole('button', { name: 'Ativar tema escuro' }).click(); await expect(page.locator('html')).toHaveClass(/dark/); await page.reload(); await expect(page.locator('html')).toHaveClass(/dark/);
-  await page.goto('/equipe'); await expect(page.getByText('Carga de trabalho')).toBeVisible(); await page.screenshot({ path: 'test-results/equipe-dark.png', fullPage: true });
+  await page.goto('/equipe'); await expect(page.getByText('Carga de trabalho')).toBeVisible(); await page.screenshot({ path: 'test-results/equipe-dark.jpg', type: 'jpeg', quality: 70, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/');
   await page.getByRole('button', { name: 'Abrir menu' }).click(); await expect(page.getByRole('navigation')).toBeVisible();
   await page.getByRole('link', { name: 'Clientes', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Clientes', exact: true })).toBeVisible();
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth })); expect(width.scroll).toBeLessThanOrEqual(width.client);
-  await page.screenshot({ path: 'test-results/clientes-mobile.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/clientes-mobile.jpg', type: 'jpeg', quality: 70, fullPage: true });
 });
 test('Estados de erro, recuperação e vazio', async ({ page }) => {
   await page.route('**/api/dashboard/resumo*', route => route.fulfill({ status: 500, contentType: 'application/problem+json', body: JSON.stringify({ title: 'Erro interno', detail: 'Falha temporária na operação.' }) }));
