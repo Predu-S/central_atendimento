@@ -10,6 +10,16 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: Local_Only_ChangeMe123!
+        ports: ['1433:1433']
+        options: >-
+          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Local_Only_ChangeMe123!' -C -Q 'SELECT 1'"
+          --health-interval=10s --health-timeout=5s --health-retries=20
     defaults:
       run:
         working-directory: backend
@@ -20,12 +30,6 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore Atendimento.sln
       - run: dotnet tool restore
-      - name: Scaffold initial migrations if absent
-        run: |
-          if [ ! -d src/Infrastructure/Migrations ]; then
-            dotnet ef migrations add InitialSqlServer --project src/Infrastructure --context AtendimentoDbContext --output-dir Migrations/SqlServer
-            dotnet ef migrations add InitialSqlite --project src/Infrastructure --context SqliteAtendimentoDbContext --output-dir Migrations/Sqlite
-          fi
       - name: Build
         run: dotnet build Atendimento.sln --no-restore --configuration Release
       - name: Tests
@@ -36,21 +40,27 @@ jobs:
         run: |
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5080 dotnet src/Api/bin/Release/net8.0/Api.dll --contentRoot "$PWD/src/Api" > api.log 2>&1 &
           API_PID=$!
-          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
+          trap 'kill "$API_PID" 2>/dev/null || true; wait "$API_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 60); do
             if curl --silent --fail http://localhost:5080/api/clientes >/dev/null; then break; fi
             if ! kill -0 "$API_PID" 2>/dev/null; then cat api.log; exit 1; fi
             sleep 1
           done
           python3 scripts/smoke.py || { cat api.log; exit 1; }
-      - name: Export generated migration source
-        if: always()
+      - name: Smoke API with SQL Server
+        env:
+          Database__Provider: SqlServer
+          ConnectionStrings__SqlServer: 'Server=localhost,1433;Database=Atendimento;User Id=sa;Password=Local_Only_ChangeMe123!;TrustServerCertificate=True'
         run: |
-          python3 - <<'PYCODE'
-          import pathlib, json, base64
-          for p in pathlib.Path('src/Infrastructure/Migrations').rglob('*.cs'):
-              print('MIGRATION_SOURCE ' + json.dumps({'path':'backend/'+str(p), 'content':base64.b64encode(p.read_bytes()).decode()}))
-          PYCODE
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5080 dotnet src/Api/bin/Release/net8.0/Api.dll --contentRoot "$PWD/src/Api" > sqlserver-api.log 2>&1 &
+          API_PID=$!
+          trap 'kill "$API_PID" 2>/dev/null || true; wait "$API_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 90); do
+            if curl --silent --fail http://localhost:5080/api/clientes >/dev/null; then break; fi
+            if ! kill -0 "$API_PID" 2>/dev/null; then cat sqlserver-api.log; exit 1; fi
+            sleep 1
+          done
+          python3 scripts/smoke.py || { cat sqlserver-api.log; exit 1; }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -60,3 +70,4 @@ jobs:
             backend/tests/**/TestResults/*.trx
             backend/sqlserver.sql
             backend/api.log
+            backend/sqlserver-api.log
