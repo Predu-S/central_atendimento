@@ -7,7 +7,7 @@ public class Cliente { public int Id { get; set; } public string Nome { get; set
 public class Equipe { public int Id { get; set; } public string Nome { get; set; } = ""; }
 public class Tecnico { public int Id { get; set; } public string Nome { get; set; } = ""; public int EquipeId { get; set; } public Equipe Equipe { get; set; } = null!; }
 public class RegraSla { public int Id { get; set; } public Prioridade Prioridade { get; set; } public int PrimeiraRespostaMinutos { get; set; } public int ResolucaoMinutos { get; set; } }
-public class ConfiguracaoSla { public int Id { get; set; } = 1; public string HorarioJson { get; set; } = ""; }
+public class ConfiguracaoSla { public int Id { get; set; } public string HorarioJson { get; set; } = ""; }
 public class Ticket
 {
     public int Id { get; set; }
