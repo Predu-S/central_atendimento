@@ -37,7 +37,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AtendimentoDbContext>();
     await db.Database.MigrateAsync();
-    var horario = builder.Configuration.GetSection("Sla:HorarioComercial").Get<HorarioComercial>() ?? new HorarioComercial();
+    var horarioSection = builder.Configuration.GetSection("Sla:HorarioComercial");
+
+var horario = (horarioSection.Get<HorarioComercial>() ?? new HorarioComercial()) with
+{
+    Dias = horarioSection.GetSection("Dias").Get<DayOfWeek[]>()
+        ?? new HorarioComercial().Dias
+};
     var configuracao = new ConfiguracaoSlaDto(Enum.GetValues<Prioridade>().Select(p => new RegraSlaDto(p, 60, 480)).ToList(), horario);
     await scope.ServiceProvider.GetRequiredService<IValidator<ConfiguracaoSlaDto>>().ValidateAndThrowAsync(configuracao);
     await SeedData.Inicializar(db, horario, builder.Configuration.GetValue("Database:Seed", true));
