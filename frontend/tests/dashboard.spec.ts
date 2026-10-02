@@ -56,6 +56,7 @@ test('Filtros, paginação, lote e Kanban persistem no servidor', async ({ page,
   await page.getByLabel('Filtrar prioridade', { exact: true }).selectOption('Alta');
   const filtered = await (await request.get(`${apiUrl}/api/tickets?status=Aberto&prioridade=Alta&tamanhoPagina=100`)).json(); expect(filtered.itens.length).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Limpar filtros' }).click();
+  await expect(page.locator('div[aria-busy]').first()).toHaveAttribute('aria-busy', 'false');
   const checkbox = page.getByRole('checkbox', { name: /Selecionar ticket / }).first(); await expect(checkbox).toBeVisible(); const id = Number((await checkbox.getAttribute('aria-label'))?.split(' ').at(-1));
   await checkbox.check(); await page.getByLabel('Status em lote').selectOption('EmAndamento');
   await page.getByRole('button', { name: 'Aplicar alterações' }).click(); await expect(page.getByText('1 ticket(s) atualizado(s).')).toBeVisible();
